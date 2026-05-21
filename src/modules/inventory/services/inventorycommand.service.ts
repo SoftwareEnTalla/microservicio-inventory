@@ -99,6 +99,11 @@ export class InventoryCommandService implements OnModuleInit {
     return entityData?.[field] ?? currentData?.[field] ?? inputData?.[field];
   }
 
+  private normalizeNumericValue(value: any): number {
+    const numericValue = Number(value ?? 0);
+    return Number.isFinite(numericValue) ? numericValue : 0;
+  }
+
   private async publishDslDomainEvents(events: BaseEvent[]): Promise<void> {
     for (const event of events) {
       await this.eventPublisher.publish(event as any);
@@ -118,7 +123,22 @@ export class InventoryCommandService implements OnModuleInit {
     const entityData = ((entity ?? {}) as Record<string, any>);
     const currentData = ((current ?? {}) as Record<string, any>);
     const pendingEvents: BaseEvent[] = [];
-// No se definieron business-rules target=service.
+    const nextAvailableQty = this.normalizeNumericValue(this.dslValue(entityData, currentData, inputData, 'availableQty'));
+    const previousAvailableQty = this.normalizeNumericValue(currentData?.availableQty);
+    const reorderPoint = this.normalizeNumericValue(this.dslValue(entityData, currentData, inputData, 'reorderPoint'));
+    const crossedThreshold = reorderPoint > 0 && nextAvailableQty <= reorderPoint && previousAvailableQty > reorderPoint;
+
+    if (operation !== 'delete' && crossedThreshold) {
+      pendingEvents.push(
+        InventoryThresholdBreachedEvent.create(
+          String(entityData?.id ?? currentData?.id ?? inputData?.id ?? ''),
+          entityData,
+          String(entityData?.createdBy ?? currentData?.createdBy ?? inputData?.createdBy ?? 'system'),
+          String(entityData?.id ?? currentData?.id ?? inputData?.id ?? ''),
+        ),
+      );
+    }
+
     if (publishEvents) {
       await this.publishDslDomainEvents(pendingEvents);
     }

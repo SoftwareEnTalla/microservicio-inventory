@@ -54,6 +54,8 @@ import { GetInventoryByIdHandler } from "../queries/handlers/getinventorybyid.ha
 import { GetInventoryByFieldHandler } from "../queries/handlers/getinventorybyfield.handler";
 import { GetAllInventoryHandler } from "../queries/handlers/getallinventory.handler";
 import { InventoryCrudSaga } from "../sagas/inventory-crud.saga";
+import { InventoryReturnRestockedSyncSaga } from "../sagas/inventory-return-restocked-sync.saga";
+import { InventoryTransferReceivedSyncSaga } from "../sagas/inventory-transfer-received-sync.saga";
 
 import { EVENT_TOPICS } from "../events/event-registry";
 
@@ -109,6 +111,8 @@ import { EventStoreService } from "../shared/event-store/event-store.service";
     GetInventoryByFieldHandler,
     GetAllInventoryHandler,
     InventoryCrudSaga,
+    InventoryReturnRestockedSyncSaga,
+    InventoryTransferReceivedSyncSaga,
     //Configurations
     {
       provide: 'EVENT_SOURCING_CONFIG',

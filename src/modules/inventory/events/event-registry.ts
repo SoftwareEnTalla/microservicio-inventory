@@ -37,6 +37,8 @@ import { InventoryReservedEvent } from './inventoryreserved.event';
 import { InventoryReleasedEvent } from './inventoryreleased.event';
 import { InventoryAdjustedEvent } from './inventoryadjusted.event';
 import { InventoryThresholdBreachedEvent } from './inventorythresholdbreached.event';
+import { ReturnRestockedEvent } from './returnrestocked.event';
+import { TransferReceivedEvent } from './transferreceived.event';
 
 export type RegisteredEventClass<T extends BaseEvent = BaseEvent> = new (
   aggregateId: string,
@@ -102,26 +104,62 @@ export const EVENT_DEFINITIONS: Record<string, RegisteredEventDefinition> = {
   'inventory-threshold-breached': createEventDefinition('inventory-threshold-breached', InventoryThresholdBreachedEvent, EVENT_DEFINITION_OVERRIDES['inventory-threshold-breached']),
 };
 
+export const EXTERNAL_EVENT_DEFINITIONS: Record<string, RegisteredEventDefinition> = {
+  'return-restocked': createEventDefinition('return-restocked', ReturnRestockedEvent, {
+    version: '1.0.0',
+    retryTopic: 'return-restocked-retry',
+    dlqTopic: 'return-restocked-dlq',
+    maxRetries: 5,
+    replayable: true,
+  }),
+  'transfer-received': createEventDefinition('transfer-received', TransferReceivedEvent, {
+    version: '1.0.0',
+    retryTopic: 'transfer-received-retry',
+    dlqTopic: 'transfer-received-dlq',
+    maxRetries: 5,
+    replayable: true,
+  }),
+};
+
+const ALL_EVENT_DEFINITIONS: Record<string, RegisteredEventDefinition> = {
+  ...EVENT_DEFINITIONS,
+  ...EXTERNAL_EVENT_DEFINITIONS,
+};
+
 export const EVENT_REGISTRY: Record<string, RegisteredEventClass> = Object.fromEntries(
-  Object.values(EVENT_DEFINITIONS).map((definition) => [definition.topic, definition.eventClass])
+  Object.values(ALL_EVENT_DEFINITIONS).map((definition) => [definition.topic, definition.eventClass])
 );
 
 export const EVENT_TOPICS = Object.values(EVENT_DEFINITIONS).map((definition) => definition.topic);
 export const EVENT_RETRY_TOPICS = Object.values(EVENT_DEFINITIONS).map((definition) => definition.retryTopic);
 export const EVENT_DLQ_TOPICS = Object.values(EVENT_DEFINITIONS).map((definition) => definition.dlqTopic);
-export const EVENT_CONSUMER_TOPICS = Array.from(new Set([...EVENT_TOPICS, ...EVENT_RETRY_TOPICS]));
-export const EVENT_ADMIN_TOPICS = Array.from(new Set([...EVENT_TOPICS, ...EVENT_RETRY_TOPICS, ...EVENT_DLQ_TOPICS]));
+export const EXTERNAL_EVENT_TOPICS = Object.values(EXTERNAL_EVENT_DEFINITIONS).map((definition) => definition.topic);
+export const EXTERNAL_EVENT_RETRY_TOPICS = Object.values(EXTERNAL_EVENT_DEFINITIONS).map((definition) => definition.retryTopic);
+export const EXTERNAL_EVENT_DLQ_TOPICS = Object.values(EXTERNAL_EVENT_DEFINITIONS).map((definition) => definition.dlqTopic);
+export const EVENT_CONSUMER_TOPICS = Array.from(new Set([
+  ...EVENT_TOPICS,
+  ...EVENT_RETRY_TOPICS,
+  ...EXTERNAL_EVENT_TOPICS,
+  ...EXTERNAL_EVENT_RETRY_TOPICS,
+]));
+export const EVENT_ADMIN_TOPICS = Array.from(new Set([
+  ...EVENT_TOPICS,
+  ...EVENT_RETRY_TOPICS,
+  ...EVENT_DLQ_TOPICS,
+  ...EXTERNAL_EVENT_RETRY_TOPICS,
+  ...EXTERNAL_EVENT_DLQ_TOPICS,
+]));
 
 export const resolveEventDefinition = (candidate?: string): RegisteredEventDefinition | undefined => {
   if (!candidate) {
     return undefined;
   }
 
-  if (EVENT_DEFINITIONS[candidate]) {
-    return EVENT_DEFINITIONS[candidate];
+  if (ALL_EVENT_DEFINITIONS[candidate]) {
+    return ALL_EVENT_DEFINITIONS[candidate];
   }
 
-  return Object.values(EVENT_DEFINITIONS).find(
+  return Object.values(ALL_EVENT_DEFINITIONS).find(
     (definition) =>
       definition.topic === candidate ||
       definition.retryTopic === candidate ||

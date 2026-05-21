@@ -9,7 +9,7 @@ services:
       entalla-net: {}
       shared-net:
         aliases:
-          - inventory
+          - inventory-reservation
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:${PORT:-3000}/api-docs"]
       interval: 10s

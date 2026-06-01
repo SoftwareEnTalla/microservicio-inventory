@@ -39,8 +39,6 @@ import {
 import { BaseEntity } from '../entities/base.entity';
 import { Inventory } from '../entities/inventory.entity';
 import { InventoryQueryRepository } from './inventoryquery.repository';
-import { generateCacheKey } from 'src/utils/functions';
-import { Cacheable } from '../decorators/cache.decorator';
 import {InventoryRepository} from './inventory.repository';
 
 //Logger
@@ -190,10 +188,6 @@ export class InventoryCommandRepository implements IEventHandler<BaseEvent>{
       .registerClient(InventoryRepository.name)
       .get(InventoryRepository.name),
   })
-  @Cacheable({
-    key: (args) => generateCacheKey<Inventory>('createInventory', args[0], args[1]),
-    ttl: 60,
-  })
   private async onInventoryCreated(event: InventoryCreatedEvent) {
     logger.info('Ready to handle onInventoryCreated event on repository:', event);
     const entity = new Inventory();
@@ -224,10 +218,6 @@ export class InventoryCommandRepository implements IEventHandler<BaseEvent>{
       .registerClient(InventoryRepository.name)
       .get(InventoryRepository.name),
   })
-  @Cacheable({
-    key: (args) => generateCacheKey<Inventory>('updateInventory', args[0], args[1]),
-    ttl: 60,
-  })
   private async onInventoryUpdated(event: InventoryUpdatedEvent) {
     logger.info('Ready to handle onInventoryUpdated event on repository:', event);
     return await this.repository.update(
@@ -252,10 +242,6 @@ export class InventoryCommandRepository implements IEventHandler<BaseEvent>{
     client: LoggerClient.getInstance()
       .registerClient(InventoryRepository.name)
       .get(InventoryRepository.name),
-  })
-  @Cacheable({
-    key: (args) => generateCacheKey<Inventory>('deleteInventory', args[0], args[1]),
-    ttl: 60,
   })
   private async onInventoryDeleted(event: InventoryDeletedEvent) {
     logger.info('Ready to handle onInventoryDeleted event on repository:', event);
@@ -340,7 +326,6 @@ export class InventoryCommandRepository implements IEventHandler<BaseEvent>{
       .registerClient(InventoryRepository.name)
       .get(InventoryRepository.name),
   })
-  @Cacheable({ key: (args) => generateCacheKey<Inventory>('createInventory',args[0], args[1]), ttl: 60 })
   async create(entity: Inventory): Promise<Inventory> {
     logger.info('Ready to create Inventory on repository:', entity);
     
@@ -385,7 +370,6 @@ export class InventoryCommandRepository implements IEventHandler<BaseEvent>{
       .registerClient(InventoryRepository.name)
       .get(InventoryRepository.name),
   })
-  @Cacheable({ key: (args) => generateCacheKey<Inventory[]>('createInventorys',args[0], args[1]), ttl: 60 })
   async bulkCreate(entities: Inventory[]): Promise<Inventory[]> {
     logger.info('Ready to create Inventory on repository:', entities);
     
@@ -432,7 +416,6 @@ export class InventoryCommandRepository implements IEventHandler<BaseEvent>{
       .registerClient(InventoryRepository.name)
       .get(InventoryRepository.name),
   })
-  @Cacheable({ key: (args) => generateCacheKey<Inventory>('updateInventory',args[0], args[1]), ttl: 60 })
   async update(
     id: string,
     partialEntity: Partial<Inventory>
@@ -476,7 +459,6 @@ export class InventoryCommandRepository implements IEventHandler<BaseEvent>{
       .registerClient(InventoryRepository.name)
       .get(InventoryRepository.name),
   })
-  @Cacheable({ key: (args) => generateCacheKey<Inventory[]>('updateInventorys',args[0], args[1]), ttl: 60 })
   async bulkUpdate(entities: Partial<Inventory>[]): Promise<Inventory[]> {
     const updatedEntities: Inventory[] = [];
     logger.info('Ready to update '+entities.length+' entities on repository:', entities);
@@ -522,7 +504,6 @@ export class InventoryCommandRepository implements IEventHandler<BaseEvent>{
       .registerClient(InventoryRepository.name)
       .get(InventoryRepository.name),
   })
-  @Cacheable({ key: (args) => generateCacheKey<string>('deleteInventory',args[0]), ttl: 60 })
   async delete(id: string): Promise<DeleteResult> {
      logger.info('Ready to delete entity with id: ${id} on repository:', id);
      const entity = await this.inventoryRepository.findOne({ id });
@@ -565,7 +546,6 @@ export class InventoryCommandRepository implements IEventHandler<BaseEvent>{
       .registerClient(InventoryRepository.name)
       .get(InventoryRepository.name),
   })
-  @Cacheable({ key: (args) => generateCacheKey<string[]>('deleteInventorys',args[0]), ttl: 60 })
   async bulkDelete(ids: string[]): Promise<DeleteResult> {
     logger.info('Ready to delete '+ids.length+' entities on repository:', ids);
     const result = await this.repository.delete(ids);

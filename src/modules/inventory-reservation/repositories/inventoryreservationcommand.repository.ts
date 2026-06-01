@@ -39,8 +39,6 @@ import {
 import { BaseEntity } from '../entities/base.entity';
 import { InventoryReservation } from '../entities/inventory-reservation.entity';
 import { InventoryReservationQueryRepository } from './inventoryreservationquery.repository';
-import { generateCacheKey } from 'src/utils/functions';
-import { Cacheable } from '../decorators/cache.decorator';
 import {InventoryReservationRepository} from './inventoryreservation.repository';
 
 //Logger
@@ -180,10 +178,6 @@ export class InventoryReservationCommandRepository implements IEventHandler<Base
       .registerClient(InventoryReservationRepository.name)
       .get(InventoryReservationRepository.name),
   })
-  @Cacheable({
-    key: (args) => generateCacheKey<InventoryReservation>('createInventoryReservation', args[0], args[1]),
-    ttl: 60,
-  })
   private async onInventoryReservationCreated(event: InventoryReservationCreatedEvent) {
     logger.info('Ready to handle onInventoryReservationCreated event on repository:', event);
     const entity = new InventoryReservation();
@@ -214,10 +208,6 @@ export class InventoryReservationCommandRepository implements IEventHandler<Base
       .registerClient(InventoryReservationRepository.name)
       .get(InventoryReservationRepository.name),
   })
-  @Cacheable({
-    key: (args) => generateCacheKey<InventoryReservation>('updateInventoryReservation', args[0], args[1]),
-    ttl: 60,
-  })
   private async onInventoryReservationUpdated(event: InventoryReservationUpdatedEvent) {
     logger.info('Ready to handle onInventoryReservationUpdated event on repository:', event);
     return await this.repository.update(
@@ -242,10 +232,6 @@ export class InventoryReservationCommandRepository implements IEventHandler<Base
     client: LoggerClient.getInstance()
       .registerClient(InventoryReservationRepository.name)
       .get(InventoryReservationRepository.name),
-  })
-  @Cacheable({
-    key: (args) => generateCacheKey<InventoryReservation>('deleteInventoryReservation', args[0], args[1]),
-    ttl: 60,
   })
   private async onInventoryReservationDeleted(event: InventoryReservationDeletedEvent) {
     logger.info('Ready to handle onInventoryReservationDeleted event on repository:', event);
@@ -275,7 +261,6 @@ export class InventoryReservationCommandRepository implements IEventHandler<Base
       .registerClient(InventoryReservationRepository.name)
       .get(InventoryReservationRepository.name),
   })
-  @Cacheable({ key: (args) => generateCacheKey<InventoryReservation>('createInventoryReservation',args[0], args[1]), ttl: 60 })
   async create(entity: InventoryReservation): Promise<InventoryReservation> {
     logger.info('Ready to create InventoryReservation on repository:', entity);
     
@@ -320,7 +305,6 @@ export class InventoryReservationCommandRepository implements IEventHandler<Base
       .registerClient(InventoryReservationRepository.name)
       .get(InventoryReservationRepository.name),
   })
-  @Cacheable({ key: (args) => generateCacheKey<InventoryReservation[]>('createInventoryReservations',args[0], args[1]), ttl: 60 })
   async bulkCreate(entities: InventoryReservation[]): Promise<InventoryReservation[]> {
     logger.info('Ready to create InventoryReservation on repository:', entities);
     
@@ -367,7 +351,6 @@ export class InventoryReservationCommandRepository implements IEventHandler<Base
       .registerClient(InventoryReservationRepository.name)
       .get(InventoryReservationRepository.name),
   })
-  @Cacheable({ key: (args) => generateCacheKey<InventoryReservation>('updateInventoryReservation',args[0], args[1]), ttl: 60 })
   async update(
     id: string,
     partialEntity: Partial<InventoryReservation>
@@ -411,7 +394,6 @@ export class InventoryReservationCommandRepository implements IEventHandler<Base
       .registerClient(InventoryReservationRepository.name)
       .get(InventoryReservationRepository.name),
   })
-  @Cacheable({ key: (args) => generateCacheKey<InventoryReservation[]>('updateInventoryReservations',args[0], args[1]), ttl: 60 })
   async bulkUpdate(entities: Partial<InventoryReservation>[]): Promise<InventoryReservation[]> {
     const updatedEntities: InventoryReservation[] = [];
     logger.info('Ready to update '+entities.length+' entities on repository:', entities);
@@ -457,7 +439,6 @@ export class InventoryReservationCommandRepository implements IEventHandler<Base
       .registerClient(InventoryReservationRepository.name)
       .get(InventoryReservationRepository.name),
   })
-  @Cacheable({ key: (args) => generateCacheKey<string>('deleteInventoryReservation',args[0]), ttl: 60 })
   async delete(id: string): Promise<DeleteResult> {
      logger.info('Ready to delete entity with id: ${id} on repository:', id);
      const entity = await this.inventoryreservationRepository.findOne({ id });
@@ -500,7 +481,6 @@ export class InventoryReservationCommandRepository implements IEventHandler<Base
       .registerClient(InventoryReservationRepository.name)
       .get(InventoryReservationRepository.name),
   })
-  @Cacheable({ key: (args) => generateCacheKey<string[]>('deleteInventoryReservations',args[0]), ttl: 60 })
   async bulkDelete(ids: string[]): Promise<DeleteResult> {
     logger.info('Ready to delete '+ids.length+' entities on repository:', ids);
     const result = await this.repository.delete(ids);

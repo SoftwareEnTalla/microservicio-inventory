@@ -63,11 +63,13 @@ import { InventoryReservationLoggingInterceptor } from "../interceptors/inventor
 
 //Event-Sourcing dependencies
 import { EventStoreService } from "../shared/event-store/event-store.service";
+import { InventoryModule } from "../../inventory/modules/inventory.module";
 
 @Module({
   imports: [
     CqrsModule,
     KafkaModule,
+    InventoryModule,
     TypeOrmModule.forFeature([BaseEntity, InventoryReservation]), // Incluir BaseEntity para herencia
     CacheModule.registerAsync({
       useFactory: async () => {

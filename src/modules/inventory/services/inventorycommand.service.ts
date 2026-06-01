@@ -34,10 +34,8 @@ import { DeleteResult, UpdateResult } from "typeorm";
 import { Inventory } from "../entities/inventory.entity";
 import { CreateInventoryDto, UpdateInventoryDto, DeleteInventoryDto } from "../dtos/all-dto";
  
-import { generateCacheKey } from "src/utils/functions";
 import { InventoryCommandRepository } from "../repositories/inventorycommand.repository";
 import { InventoryQueryRepository } from "../repositories/inventoryquery.repository";
-import { Cacheable } from "../decorators/cache.decorator";
 import { InventoryResponse, InventorysResponse } from "../types/inventory.types";
 import { Helper } from "src/common/helpers/helpers";
 //Logger
@@ -125,8 +123,32 @@ export class InventoryCommandService implements OnModuleInit {
     const pendingEvents: BaseEvent[] = [];
     const nextAvailableQty = this.normalizeNumericValue(this.dslValue(entityData, currentData, inputData, 'availableQty'));
     const previousAvailableQty = this.normalizeNumericValue(currentData?.availableQty);
+    const nextReservedQty = this.normalizeNumericValue(this.dslValue(entityData, currentData, inputData, 'reservedQty'));
+    const previousReservedQty = this.normalizeNumericValue(currentData?.reservedQty);
     const reorderPoint = this.normalizeNumericValue(this.dslValue(entityData, currentData, inputData, 'reorderPoint'));
     const crossedThreshold = reorderPoint > 0 && nextAvailableQty <= reorderPoint && previousAvailableQty > reorderPoint;
+
+    if (operation === 'update' && nextReservedQty > previousReservedQty) {
+      pendingEvents.push(
+        InventoryReservedEvent.create(
+          String(entityData?.id ?? currentData?.id ?? inputData?.id ?? ''),
+          entityData,
+          String(entityData?.createdBy ?? currentData?.createdBy ?? inputData?.createdBy ?? 'system'),
+          String(entityData?.id ?? currentData?.id ?? inputData?.id ?? ''),
+        ),
+      );
+    }
+
+    if (operation === 'update' && nextReservedQty < previousReservedQty) {
+      pendingEvents.push(
+        InventoryReleasedEvent.create(
+          String(entityData?.id ?? currentData?.id ?? inputData?.id ?? ''),
+          entityData,
+          String(entityData?.createdBy ?? currentData?.createdBy ?? inputData?.createdBy ?? 'system'),
+          String(entityData?.id ?? currentData?.id ?? inputData?.id ?? ''),
+        ),
+      );
+    }
 
     if (operation !== 'delete' && crossedThreshold) {
       pendingEvents.push(
@@ -161,11 +183,6 @@ export class InventoryCommandService implements OnModuleInit {
     client: LoggerClient.getInstance()
       .registerClient(InventoryCommandService.name)
       .get(InventoryCommandService.name),
-  })
-  @Cacheable({
-    key: (args) =>
-      generateCacheKey<CreateInventoryDto>("createInventory", args[0], args[1]),
-    ttl: 60,
   })
   async create(
     createInventoryDtoInput: CreateInventoryDto
@@ -214,11 +231,6 @@ export class InventoryCommandService implements OnModuleInit {
       .registerClient(InventoryCommandService.name)
       .get(InventoryCommandService.name),
   })
-  @Cacheable({
-    key: (args) =>
-      generateCacheKey<Inventory>("createInventorys", args[0], args[1]),
-    ttl: 60,
-  })
   async bulkCreate(
     createInventoryDtosInput: CreateInventoryDto[]
   ): Promise<InventorysResponse<Inventory>> {
@@ -263,11 +275,6 @@ export class InventoryCommandService implements OnModuleInit {
     client: LoggerClient.getInstance()
       .registerClient(InventoryCommandService.name)
       .get(InventoryCommandService.name),
-  })
-  @Cacheable({
-    key: (args) =>
-      generateCacheKey<UpdateInventoryDto>("updateInventory", args[0], args[1]),
-    ttl: 60,
   })
   async update(
     id: string,
@@ -318,11 +325,6 @@ export class InventoryCommandService implements OnModuleInit {
       .registerClient(InventoryCommandService.name)
       .get(InventoryCommandService.name),
   })
-  @Cacheable({
-    key: (args) =>
-      generateCacheKey<UpdateInventoryDto>("updateInventorys", args[0]),
-    ttl: 60,
-  })
   async bulkUpdate(
     partialEntity: UpdateInventoryDto[]
   ): Promise<InventorysResponse<Inventory>> {
@@ -366,11 +368,6 @@ export class InventoryCommandService implements OnModuleInit {
       .registerClient(InventoryCommandService.name)
       .get(InventoryCommandService.name),
   })
-  @Cacheable({
-    key: (args) =>
-      generateCacheKey<DeleteInventoryDto>("deleteInventory", args[0], args[1]),
-    ttl: 60,
-  })
   async delete(id: string): Promise<InventoryResponse<Inventory>> {
     try {
       const entity = await this.queryRepository.findById(id);
@@ -413,10 +410,6 @@ export class InventoryCommandService implements OnModuleInit {
     client: LoggerClient.getInstance()
       .registerClient(InventoryCommandService.name)
       .get(InventoryCommandService.name),
-  })
-  @Cacheable({
-    key: (args) => generateCacheKey<string[]>("deleteInventorys", args[0]),
-    ttl: 60,
   })
   async bulkDelete(ids: string[]): Promise<DeleteResult> {
     return await this.repository.bulkDelete(ids);

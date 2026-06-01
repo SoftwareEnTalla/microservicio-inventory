@@ -53,6 +53,7 @@ import { HorizontalModule } from "@common/horizontal";
 import { InventoryReservationModule } from "./modules/inventory-reservation/modules/inventoryreservation.module";
 import { InventoryReservationCommandService } from "./modules/inventory-reservation/services/inventoryreservationcommand.service";
 import { InventoryReservationQueryService } from "./modules/inventory-reservation/services/inventoryreservationquery.service";
+import { InventoryLifecycleModule } from "./modules/inventory-lifecycle/inventory-lifecycle.module";
 
 /*
 //TODO unused for while dependencies
@@ -118,7 +119,8 @@ import LoggerService, { logger } from "@core/logs/logger";
     HorizontalModule,
     InventoryModule,
     CatalogClientModule,
-        InventoryReservationModule,    
+      InventoryReservationModule,
+    InventoryLifecycleModule,
     /**
      * Módulo Logger de la aplicación
      */

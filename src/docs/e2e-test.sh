@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-PORT=${PORT:-3007}
+PORT=${PORT:-3012}
 BASE_URL="http://localhost:${PORT}/api/inventory"
 wait_for(){ until curl -sSf ${BASE_URL} >/dev/null 2>&1; do printf "."; sleep 1; done }
 echo "Waiting for inventory-service on ${BASE_URL}..."
